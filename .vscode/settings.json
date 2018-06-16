@@ -1,0 +1,6 @@
+{
+  "azureFunctions.projectRuntime": "beta",
+  "azureFunctions.projectLanguage": "PowerShell",
+  "azureFunctions.templateFilter": "All",
+  "editor.wordWrap": "off"
+}
