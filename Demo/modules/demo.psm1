@@ -5,7 +5,7 @@ function Invoke-Demo {
         $Name
     )
     begin {
-        $message = "hello, "
+        $message = "howdy ho, "
     }
     process {
         $message += $Name
