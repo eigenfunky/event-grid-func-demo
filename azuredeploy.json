@@ -59,6 +59,13 @@
 			"metadata": {
 				"description": "The branch of the GitHub repository to use."
 			}
+		},
+		"vault_name": {
+			"type": "string",
+			"defaultValue": "[concat(parameter('appName'), '_Vault')]",
+			"metadata": {
+				"description": "The name of the vault for secret and key storage."
+			}
 		}
 	},
 	"variables": {
@@ -66,72 +73,102 @@
 		"hostingPlanName": "[concat(parameters('appName'), '-plan')]",
 		"storageAccountName": "[concat(uniquestring(resourceGroup().id), 'functions')]"
 	},
-	"resources": [{
-		"type": "Microsoft.Storage/storageAccounts",
-		"name": "[variables('storageAccountName')]",
-		"apiVersion": "2015-06-15",
-		"location": "[resourceGroup().location]",
-		"properties": {
-			"accountType": "[parameters('storageAccountType')]"
-		}
-	}, {
-		"type": "Microsoft.Web/serverfarms",
-		"apiVersion": "2015-04-01",
-		"name": "[variables('hostingPlanName')]",
-		"location": "[resourceGroup().location]",
-		"properties": {
-			"name": "[variables('hostingPlanName')]",
-			"sku": "[parameters('sku')]",
-			"workerSize": "[parameters('workerSize')]",
-			"hostingEnvironment": "",
-			"numberOfWorkers": 1
-		}
-	}, {
-		"apiVersion": "2015-08-01",
-		"type": "Microsoft.Web/sites",
-		"name": "[variables('functionAppName')]",
-		"location": "[resourceGroup().location]",
-		"kind": "functionapp",
-		"properties": {
-			"name": "[variables('functionAppName')]",
-			"serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
-			"hostingEnvironment": "",
-			"clientAffinityEnabled": false,
-			"siteConfig": {
-				"alwaysOn": true,
-				"cors": {
-					"allowedOrigins": [
-						"*"
-					]
-				},
-				"appSettings": [{
-					"name": "FUNCTIONS_EXTENSION_VERSION",
-					"value": "~1"
-				}, {
-					"name": "AzureWebJobsStorage",
-					"value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2015-05-01-preview').key1,';')]"
-				}, {
-					"name": "AzureWebJobsDashboard",
-					"value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2015-05-01-preview').key1,';')]"
-				}]
+	"resources": [
+		{
+			"type": "Microsoft.Storage/storageAccounts",
+			"name": "[variables('storageAccountName')]",
+			"apiVersion": "2015-06-15",
+			"location": "[resourceGroup().location]",
+			"properties": {
+				"accountType": "[parameters('storageAccountType')]"
 			}
 		},
-		"dependsOn": [
-			"[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
-			"[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
-		],
-		"resources": [{
-			"apiVersion": "2015-08-01",
-			"name": "web",
-			"type": "sourcecontrols",
-			"dependsOn": [
-				"[resourceId('Microsoft.Web/Sites', variables('functionAppName'))]"
-			],
+		{
+			"type": "Microsoft.Web/serverfarms",
+			"apiVersion": "2015-04-01",
+			"name": "[variables('hostingPlanName')]",
+			"location": "[resourceGroup().location]",
 			"properties": {
-				"RepoUrl": "[parameters('repoURL')]",
-				"branch": "[parameters('branch')]",
-				"IsManualIntegration": true
+				"name": "[variables('hostingPlanName')]",
+				"sku": "[parameters('sku')]",
+				"workerSize": "[parameters('workerSize')]",
+				"hostingEnvironment": "",
+				"numberOfWorkers": 1
 			}
-		}]
-	}]
+		},
+		{
+			"apiVersion": "2015-08-01",
+			"type": "Microsoft.Web/sites",
+			"name": "[variables('functionAppName')]",
+			"location": "[resourceGroup().location]",
+			"kind": "functionapp",
+			"properties": {
+				"name": "[variables('functionAppName')]",
+				"serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+				"hostingEnvironment": "",
+				"clientAffinityEnabled": false,
+				"siteConfig": {
+					"alwaysOn": true,
+					"cors": {
+						"allowedOrigins": [
+							"*"
+						]
+					},
+					"appSettings": [
+						{
+							"name": "FUNCTIONS_EXTENSION_VERSION",
+							"value": "~1"
+						},
+						{
+							"name": "AzureWebJobsStorage",
+							"value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2015-05-01-preview').key1,';')]"
+						},
+						{
+							"name": "AzureWebJobsDashboard",
+							"value": "[concat('DefaultEndpointsProtocol=https;AccountName=',variables('storageAccountName'),';AccountKey=',listkeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2015-05-01-preview').key1,';')]"
+						}
+					]
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
+				"[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+			],
+			"resources": [
+				{
+					"apiVersion": "2015-08-01",
+					"name": "web",
+					"type": "sourcecontrols",
+					"dependsOn": [
+						"[resourceId('Microsoft.Web/Sites', variables('functionAppName'))]"
+					],
+					"properties": {
+						"RepoUrl": "[parameters('repoURL')]",
+						"branch": "[parameters('branch')]",
+						"IsManualIntegration": true
+					}
+				}
+			]
+		},
+		{
+            "type": "Microsoft.KeyVault/vaults",
+            "name": "[parameters('vaults_name')]",
+            "apiVersion": "2016-10-01",
+            "location": "centralus",
+            "tags": {},
+            "scale": null,
+            "properties": {
+                "sku": {
+                    "family": "A",
+                    "name": "Standard"
+                },
+                "tenantId": "39b4d7b0-abc8-4b79-b21e-1079a74a790f",
+                "accessPolicies": [],
+                "enabledForDeployment": false,
+                "enabledForDiskEncryption": false,
+                "enabledForTemplateDeployment": false
+            },
+            "dependsOn": []
+        }
+	]
 }
