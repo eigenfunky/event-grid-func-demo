@@ -12,6 +12,11 @@ elseif ($REQ_METHOD -eq "GET") {
     }
 }
 
+# Next steps:
+# TODO: Add some code to get the secret from the key vault
+# TODO: Authenticate with the service principal
+# TODO: Get 'subject' and/or 'resourceId' from event and log to console.
+
 $output = Invoke-Demo -Name $name
 
 Out-File -Encoding ascii -FilePath $res -InputObject $output
