@@ -6,6 +6,7 @@ if ($REQ_METHOD -eq "POST") {
     $name = $requestBody.name
 } 
 elseif ($REQ_METHOD -eq "GET") {
+    # Method: GET
     if ($REQ_QUERY_name) {
         $name = $REQ_QUERY_name
     }
