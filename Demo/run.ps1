@@ -12,9 +12,22 @@ elseif ($REQ_METHOD -eq "GET") {
     }
 }
 
-# Next steps:
-# TODO: Add some code to get the secret from the key vault
-# TODO: Authenticate with the service principal
+# Get params
+$VaultName = $env:VaultName
+$TenantId = $env:TenantId
+$ServicePrincipalApplicationId = $env:ServicePrincipalApplicationId
+$ServicePrincipalSecret = Get-AzureKeyVaultSecret -VaultName $VaultName -Name "ServicePrincipalSecret"
+$credentials = New-Object PSCredential($ServicePrincipalApplicationId, $ServicePrincipalSecret)
+
+# Authenticate with Azure Powershell through service principal
+$params = @{
+    ServicePrincipal = $true
+    Credential = $credentials
+    TenantId = $TenantId
+}
+Login-AzureRmAccount @params
+Get-AzureRmContext
+
 # TODO: Get 'subject' and/or 'resourceId' from event and log to console.
 
 $output = Invoke-Demo -Name $name
