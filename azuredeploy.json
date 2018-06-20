@@ -155,7 +155,7 @@
 		},
 		{
             "type": "Microsoft.KeyVault/vaults",
-            "name": "[parameters('vaults_name')]",
+            "name": "[parameters('vault_name')]",
             "apiVersion": "2016-10-01",
             "location": "centralus",
             "tags": {},
