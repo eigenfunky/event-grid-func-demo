@@ -13,23 +13,21 @@ elseif ($REQ_METHOD -eq "GET") {
 }
 
 # Get params
-$VaultName = $env:VaultName
-$TenantId = $env:TenantId
-$ServicePrincipalApplicationId = $env:ServicePrincipalApplicationId
-$ServicePrincipalSecret = Get-AzureKeyVaultSecret -VaultName $VaultName -Name "ServicePrincipalSecret"
-$credentials = New-Object PSCredential($ServicePrincipalApplicationId, $ServicePrincipalSecret)
+$apiVersion = "2017-09-01"
+$resourceURI = "https://management.azure.com/"
+$tokenAuthURI = $env:MSI_ENDPOINT + "?resource=$resourceURI&api-version=$apiVersion"
+$tokenResponse = Invoke-RestMethod -Method Get -Headers @{"Secret"="$env:MSI_SECRET"} -Uri $tokenAuthURI
+$accessToken = $tokenResponse.access_token
+$accountId = [string]::Empty
+
+$output = $tokenResponse | Format-List
 
 # Authenticate with Azure Powershell through service principal
-$params = @{
-    ServicePrincipal = $true
-    Credential = $credentials
-    TenantId = $TenantId
-}
-Login-AzureRmAccount @params
-Get-AzureRmContext
+# Add-AzureRmAccount -AccessToken $accessToken -AccountId $accountId
+# Get-AzureRmContext
 
-# TODO: Get 'subject' and/or 'resourceId' from event and log to console.
+# # TODO: Get 'subject' and/or 'resourceId' from event and log to console.
 
-$output = Invoke-Demo -Name $name
+# $output = Invoke-Demo -Name $name
 
 Out-File -Encoding ascii -FilePath $res -InputObject $output
