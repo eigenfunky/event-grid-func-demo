@@ -1,3 +1,13 @@
+
+# Constants
+[string] $SPApplicationId = $env:ServicePrincipalApplicationId
+# TODO: Get this from resource uri instead of app settings
+[string] $SubscriptionId = $env:SubscriptionId
+[string] $ApiVersion = "2017-09-01"
+[string] $ResourceURI = "https://management.azure.com/"
+Write-Information "$ApiVersion"
+
+# Parameters
 [string] $name = [string]::Empty
 
 if ($REQ_METHOD -eq "POST") {
@@ -13,21 +23,27 @@ elseif ($REQ_METHOD -eq "GET") {
 }
 
 # Get params
-$apiVersion = "2017-09-01"
-$resourceURI = "https://management.azure.com/"
-$tokenAuthURI = $env:MSI_ENDPOINT + "?resource=$resourceURI&api-version=$apiVersion"
-$tokenResponse = Invoke-RestMethod -Method Get -Headers @{"Secret"="$env:MSI_SECRET"} -Uri $tokenAuthURI
-$accessToken = $tokenResponse.access_token
-$accountId = [string]::Empty
-
-$output = $tokenResponse | Format-List
+$uri = $env:MSI_ENDPOINT + "?resource=$ResourceURI&api-version=$ApiVersion"
+$params = @{
+    Method = "Get"
+    Headers = @{
+        "Secret" = "$env:MSI_SECRET"
+    }
+    Uri = $uri
+}
+$token = Invoke-RestMethod @params
 
 # Authenticate with Azure Powershell through service principal
-# Add-AzureRmAccount -AccessToken $accessToken -AccountId $accountId
-# Get-AzureRmContext
+$params = @{
+    AccessToken = $token.access_token
+    AccountId = $SPApplicationId
+    SubscriptionId = $SubscriptionId
+}
+Add-AzureRmAccount @params
+Get-AzureRmContext
 
-# # TODO: Get 'subject' and/or 'resourceId' from event and log to console.
+# TODO: Get 'subject' and/or 'resourceId' from event and log to console.
 
-# $output = Invoke-Demo -Name $name
+$output = Invoke-Demo -Name $name
 
 Out-File -Encoding ascii -FilePath $res -InputObject $output
