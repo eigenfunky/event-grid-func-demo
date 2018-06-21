@@ -4,15 +4,11 @@ function Invoke-Demo {
         [string]
         $Name
     )
-    begin {
-        $message = "howdy ho, "
-    }
+    begin {}
     process {
-        $message += $Name
+        $message = "Hey there, $Name"
     }
-    end {
-        $message
-    }
+    end { $message }
 }
 
 Export-ModuleMember -Function Invoke-Demo
