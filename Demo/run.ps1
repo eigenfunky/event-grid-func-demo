@@ -1,11 +1,30 @@
 
+<#
+.SYNOPSIS
+    This function is a demonstration of how to authenticate with an MSI token 
+    and call modules.
+.DESCRIPTION
+    This function is a simple demo function to explore the following:
+        1. How to utilize the powershell runtime for function apps
+        2. How to get a JSON Web Token from MSI
+        3. How to authenticate with AzureRm powershell with this access token
+        4. How to parse request parameters
+        5. How to define and preload modules for consumption.
+
+    This function provides a solid foundation for someone looking to wrap 
+    existing powershell scripts in a function app for azure ops automation.
+
+    Next steps:
+        1. Institute exception handling for function body
+        2. Parse subscription id from resource id
+#>
+
 # Constants
 [string] $SPApplicationId = $env:ServicePrincipalApplicationId
 # TODO: Get this from resource uri instead of app settings
 [string] $SubscriptionId = $env:SubscriptionId
 [string] $ApiVersion = "2017-09-01"
 [string] $ResourceURI = "https://management.azure.com/"
-Write-Information "$ApiVersion"
 
 # Parameters
 [string] $name = [string]::Empty
