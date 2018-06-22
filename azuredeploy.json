@@ -102,13 +102,13 @@
 			"name": "[variables('functionAppName')]",
 			"location": "[resourceGroup().location]",
 			"kind": "functionapp",
+			"identity": {
+				"type": "SystemAssigned"
+			},
 			"properties": {
 				"name": "[variables('functionAppName')]",
 				"serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('hostingPlanName'))]",
 				"hostingEnvironment": "",
-				"identity": {
-					"type": "SystemAssigned"
-				},
 				"clientAffinityEnabled": false,
 				"siteConfig": {
 					"alwaysOn": true,
