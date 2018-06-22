@@ -62,7 +62,7 @@
 		},
 		"vault_name": {
 			"type": "string",
-			"defaultValue": "[concat(parameter('appName')]",
+			"defaultValue": "[concat(parameter('appName'))]",
 			"metadata": {
 				"description": "The name of the vault for secret and key storage."
 			}
