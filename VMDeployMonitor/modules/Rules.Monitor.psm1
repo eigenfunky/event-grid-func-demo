@@ -33,21 +33,51 @@ $WindowsMemoryRule = @{
 # TODO: Disk Rule needed.
 # Linux: \Memory\PercentAvailableMemory
 $LinuxMemoryRule = @{
-    Name              = "vm_mem_gt_95"
-    MetricName        = "\Memory\PercentAvailableMemory"
-    Operator          = "GreaterThan"
-    Threshold         = 95
-    WindowSize        = $timespan
-    TimeAggregation   = "Average"
-    Description       = "alert on Memory > 95%"
+    Name            = "vm_mem_gt_95"
+    MetricName      = "\Memory\PercentAvailableMemory"
+    Operator        = "GreaterThan"
+    Threshold       = 95
+    WindowSize      = $timespan
+    TimeAggregation = "Average"
+    Description     = "alert on Memory > 95%"
 }
 
 # Standard Rulesets by OS
 [hashtable] $Rulesets = @{
     Windows = @($CpuRule, $WindowsDiskRule, $WindowsMemoryRule)
-    Linux = @($CpuRule, $LinuxMemoryRule)
+    Linux   = @($CpuRule, $LinuxMemoryRule)
 }
 # Create default timespan object
 $Timespan = New-TimeSpan -Minutes 5
 
-Export-ModuleMember -Variable $CpuRule, $WindowsDiskRule, $WindowsMemoryRule, $LinuxMemoryRule, $Rulesets, $Timespan
+function Add-RuleMetadata {
+    param (
+        [Parameter(Mandator = $true)]
+        [hashtable[]]
+        $Rules,
+        [Parameter(Mandator = $true)]
+        [string]
+        $ResourceId,
+        [Parameter(Mandator = $true)]
+        [string]
+        $VmName,
+        [Parameter(Mandator = $true)]
+        [string]
+        $ResourceGroupName,
+        [Parameter(Mandator = $true)]
+        [string]
+        $Location
+    )
+
+    foreach ($rule in $Rules) {
+        $rule.Add("TargetResourceId", $ResourceId)
+        $rule.Add("Location", $Location)
+        $rule.Add("ResourceGroupName", $ResourceGroupName)
+        $rule.Name += "_$VmName"
+    }
+
+    $Rules
+}
+
+Export-ModuleMember -Variable $CpuRule, $WindowsDiskRule, $WindowsMemoryRule, $LinuxMemoryRule, $Rulesets, $Timespan `
+    -Function Add-RuleMetadata
