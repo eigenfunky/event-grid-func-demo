@@ -18,26 +18,47 @@ if ($REQ_METHOD -eq "POST") {
     $subject = $requestBody.subject
 }
 
-# Get params
-$uri = $env:MSI_ENDPOINT + "?resource=$ResourceURI&api-version=$ApiVersion"
-$params = @{
-    Method = "Get"
-    Headers = @{
-        "Secret" = "$env:MSI_SECRET"
+$results = $resourceId.Split("/")
+# $subId = $results[2]
+$resourceGroupName = $results[4]
+# $resourceProvider = $results[6]
+$resourceType = $results[7]
+
+if ($resourceType -eq "virtualMachines") {
+    $vmName = $results[8]
+    # Get params
+    $uri = $env:MSI_ENDPOINT + "?resource=$ResourceURI&api-version=$ApiVersion"
+    $params = @{
+        Method  = "Get"
+        Headers = @{
+            "Secret" = "$env:MSI_SECRET"
+        }
+        Uri     = $uri
     }
-    Uri = $uri
+    $token = Invoke-RestMethod @params
+    
+    # Authenticate with Azure Powershell through service principal
+    $params = @{
+        AccessToken    = $token.access_token
+        AccountId      = $SPApplicationId
+        SubscriptionId = $SubscriptionId
+    }
+    Add-AzureRmAccount @params
+    Get-AzureRmContext
+    
+    # Invoke modules here.
+    $params = @{
+        Rules             = $CpuRule
+        ResourceId        = $resourceId
+        VmName            = $vmName
+        ResourceGroupName = $resourceGroupName
+        # Location = "daggumit"
+    }
+    $rules = Add-RuleMetadata @params
+    Add-VmAlerts -rules $rules
+    
+    Out-File -Encoding ascii -FilePath $res -InputObject $null
 }
-$token = Invoke-RestMethod @params
-
-# Authenticate with Azure Powershell through service principal
-$params = @{
-    AccessToken = $token.access_token
-    AccountId = $SPApplicationId
-    SubscriptionId = $SubscriptionId
+else {
+    Out-File -Encoding ascii -FilePath $res -InputObject $null
 }
-Add-AzureRmAccount @params
-Get-AzureRmContext
-
-# Invoke modules here.
-
-Out-File -Encoding ascii -FilePath $res -InputObject $output
