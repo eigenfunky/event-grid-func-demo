@@ -1,3 +1,8 @@
+ <#
+ .DESCRIPTION
+    This module defines some logic to add alert rules to a vm.
+ #>
+
 function Get-VmAlerts {
     param (
         [Parameter(Mandatory = $true)]
@@ -16,33 +21,85 @@ function Get-VmAlerts {
     return Get-AzureRmAlertRule @params
 }
 
-function Compare-Rulesets {}
+function Compare-Rulesets {
+    param (
+        [Parameter(Mandatory = $true)]
+        [hashtable[]]
+        $Ruleset,
+        [Parameter(Mandatory = $true)]
+        [hashtable[]]
+        $ActiveRuleset,
+        [Parameter(Mandatory = $true)]
+        [string[]]
+        $EqualityProperties
+    )
+    [hashtable[]] $RulesToAdd = @()
+    $params = @{
+        ReferenceObject  = $Ruleset
+        DifferenceObject = $ActiveRuleset
+        Property         = $EqualityProperties
+        IncludeEqual     = $true
+        PassThru         = $true
+    }
+    $results = Compare-Object @params
 
-function Add-VmAlerts {}
+    # Add all of the left differential rules to the array.
+    foreach ($rule in $results) {
+        if ($rule.SideIndicator -eq "<=") {
+            $RulesToAdd += $rule
+        }
+    }
 
-Export-ModuleMember -Function Get-VmAlerts, Compare-Rulesets, Add-VmAlerts
+    return $RulesToAdd
+}
+
+function Add-VmAlerts {
+    param (
+        [Parameter(Mandatory = $true)]
+        [hashtable[]]
+        $rules
+    )
+
+    # Range over rules and add each one.
+    foreach ($rule in $rules) {
+        $alertRequest = Add-AzureRmMetricAlertRule @rule
+        $alertRequest
+    }
+}
+
 
 function Map-RulesToHashtables {
     param (
         [Parameter(Mandatory = $true)]
         [PSCustomObject[]] $Alerts
-    )
-    [hashtable[]] $configuredRules = @()
-    foreach ($alert in $Alerts) {
-        $rule = @{
-            Operator        = $alert.Condition.OperatorProperty
-            Threshold       = $alert.Condition.Threshold
-            WindowSize      = $alert.Condition.WindowSize
-            TimeAggregation = $alert.Condition.TimeAggregation
-            MetricName      = $alert.Condition.DataSource.MetricName
+        )
+        [hashtable[]] $configuredRules = @()
+        foreach ($alert in $Alerts) {
+            $rule = @{
+                Operator        = $alert.Condition.OperatorProperty
+                Threshold       = $alert.Condition.Threshold
+                WindowSize      = $alert.Condition.WindowSize
+                TimeAggregation = $alert.Condition.TimeAggregation
+                MetricName      = $alert.Condition.DataSource.MetricName
+            }
+            
+            $configuredRules += $rule
         }
-
-        $configuredRules += $rule
+        
+        $configuredRules
     }
-
-    $configuredRules
+    
+function Get-VmOS {
+    param (
+        [Parameter(Mandatory = $true)]
+        [PSCustomObject]
+        $vm
+    )
+    return $vm.StorageProfile.OsDisk.OsType
 }
+    
+# function Get-VmDiagnosticsEnabled {
+#     param ()
+# }
 
-function Get-VmOS {}
-
-function Get-VmDiagnosticsEnabled {}
+Export-ModuleMember -Function Add-VmAlerts
